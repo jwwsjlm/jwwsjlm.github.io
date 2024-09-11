@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://blog.xsojson.com</id>
+    <title>小小小网站</title>
+    <updated>2024-09-11T16:24:24.295Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://blog.xsojson.com"/>
+    <link rel="self" href="https://blog.xsojson.com/atom.xml"/>
+    <subtitle>莫西莫西
+邮箱:xxphone@duck.com</subtitle>
+    <logo>https://blog.xsojson.com/images/avatar.png</logo>
+    <icon>https://blog.xsojson.com/favicon.ico</icon>
+    <rights>All rights reserved 2024, 小小小网站</rights>
+    <entry>
+        <title type="html"><![CDATA[protobuf命令行]]></title>
+        <id>https://blog.xsojson.com/post/protobuf-ming-ling-xing/</id>
+        <link href="https://blog.xsojson.com/post/protobuf-ming-ling-xing/">
+        </link>
+        <updated>2024-05-27T11:03:27.000Z</updated>
+        <content type="html"><![CDATA[<p>protoc --go_out=.. douyin.proto</p>
+<p>proto文件编写<br>
+option go_package = &quot;generated/douyinlive&quot;;<br>
+从项目根目录开始带/或.</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[docker安装agh]]></title>
+        <id>https://blog.xsojson.com/post/docker-an-zhuang-agh/</id>
+        <link href="https://blog.xsojson.com/post/docker-an-zhuang-agh/">
+        </link>
+        <updated>2024-03-16T15:17:57.000Z</updated>
+        <content type="html"><![CDATA[<pre><code>docker run -d --name adguardhome -v /mnt/nvme0n1-4/docker/AGH_Docker/work:/opt/adguardhome/work -v /mnt/nvme0n1-4/docker/AGH_Docker/conf:/opt/adguardhome/conf -p 3001:3000 -p 53:53/tcp -p 53:53/udp --restart always adguard/adguardhome
+</code></pre>
+<p>docker:https://hub.docker.com/r/adguard/adguardhome</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[sangtacviet js加密]]></title>
+        <id>https://blog.xsojson.com/post/sangtacviet-js-jia-mi/</id>
+        <link href="https://blog.xsojson.com/post/sangtacviet-js-jia-mi/">
+        </link>
+        <updated>2024-02-11T12:10:34.000Z</updated>
+        <content type="html"><![CDATA[<pre><code>c74d97b01eae257e44aa9d5bade97baf  md5(&quot;16&quot;)
+984mht9$%#$&amp;
+c74d97b01eae257e44aa9d5bade97baf  md5(&quot;16&quot;)
+65893yjg398y#$%^**()
+f3027b7c98446be13c28075b5e739688  md5(&quot;fanqie&quot;)
+45b74ba7ce701a52842ea6ef1963af50  md5(&quot;7228934448882912288&quot;)  //bookid
+566f096db7bda5c44c90c0771598f9de  md5(&quot;7228934679733207585&quot;)  //currentid
+(*&amp;^%$#@!@#$%^&amp;*()_+
+86f17c05a13a85486b12e9ed43cbb71d  //&quot;_ac&quot;
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[dockerfile]]></title>
+        <id>https://blog.xsojson.com/post/dockerfile/</id>
+        <link href="https://blog.xsojson.com/post/dockerfile/">
+        </link>
+        <updated>2024-01-10T20:06:39.000Z</updated>
+        <content type="html"><![CDATA[<pre><code># 使用Go官方镜像作为构建环境，指定具体版本号
+FROM golang:1.22.3-alpine as builder
+
+# 创建工作目录
+WORKDIR /app
+
+# 安装upx用于压缩二进制文件，apk add命令执行后清理缓存
+RUN apk update &amp;&amp; apk add --no-cache upx &amp;&amp; rm -rf /var/cache/apk/*
+
+# 设置Go模块支持和代理，便于下载依赖
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn,direct
+
+# 仅复制go.mod和go.sum，然后下载依赖，以加快构建速度并减小层的大小
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+# 复制全部的源代码
+COPY . .
+
+# 编译二进制文件，禁用CGO提高跨平台兼容性
+# 使用-gcflags和-ldflags优化二进制文件大小和安全性
+# 使用upx压缩main二进制文件
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    &amp;&amp; go build -gcflags &quot;all=-N -l&quot; -trimpath \
+    -ldflags &quot;-s -w -buildid=&quot; -o main \
+    &amp;&amp; upx -6 main
+
+# 创建一个小型的最终镜像
+FROM alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 从构建镜像中复制编译好的应用程序
+COPY --from=builder /app/main /app/main
+
+# 设置时区为上海
+ENV TZ=Asia/Shanghai
+
+# 使用标签来标记镜像的元数据
+LABEL AUTHOR=&quot;guanren&quot;
+LABEL LANGUAGE=&quot;golang&quot;
+LABEL COPYRIGHT=&quot;guanren&quot;
+
+# 安装必要的包，设置时区，并清理缓存
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
+    &amp;&amp; apk update --no-cache \
+    &amp;&amp; apk add --no-cache tzdata ca-certificates libc6-compat libgcc libstdc++ curl \
+    &amp;&amp; rm -rf /var/cache/apk/* \
+    &amp;&amp; mkdir -p /app/config \
+    &amp;&amp; cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    &amp;&amp; echo &quot;Asia/Shanghai&quot; &gt; /etc/timezone
+
+# 声明应用程序运行时监听的端口
+EXPOSE 2095
+
+# 定义容器启动时运行的命令
+CMD [&quot;./main&quot;]
+
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[一键生成dockerfile]]></title>
+        <id>https://blog.xsojson.com/post/yi-jian-sheng-cheng-dockerfile/</id>
+        <link href="https://blog.xsojson.com/post/yi-jian-sheng-cheng-dockerfile/">
+        </link>
+        <updated>2023-12-15T17:39:37.000Z</updated>
+        <content type="html"><![CDATA[<pre><code>goctl docker -go main.go
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[guanren]]></title>
+        <id>https://blog.xsojson.com/post/guanren/</id>
+        <link href="https://blog.xsojson.com/post/guanren/">
+        </link>
+        <updated>2023-12-06T19:53:07.000Z</updated>
+        <content type="html"><![CDATA[<p>{<br>
+&quot;name&quot;:	&quot;json parser&quot;,<br>
+&quot;version&quot;:	&quot;1.6.0&quot;,<br>
+&quot;description&quot;:	&quot;This is a C language version of json streamlined parser.&quot;,<br>
+&quot;repository&quot;:	&quot;https://gitee.com/Lamdonn/json&quot;,<br>
+&quot;keywords&quot;:	[&quot;json&quot;, &quot;streamlined&quot;, &quot;parser&quot;],<br>
+&quot;others&quot;:	{<br>
+&quot;open&quot;:	true,<br>
+&quot;license&quot;:	&quot;GPL3.0&quot;<br>
+}<br>
+}</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[第一个go玩具]]></title>
+        <id>https://blog.xsojson.com/post/di-yi-ge-go-wan-ju/</id>
+        <link href="https://blog.xsojson.com/post/di-yi-ge-go-wan-ju/">
+        </link>
+        <updated>2023-09-05T16:57:13.000Z</updated>
+        <content type="html"><![CDATA[<p>https://github.com/jwwsjlm/5eplay_buddy_Inquire<br>
+5e遍历战局</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[我的第一个文章]]></title>
+        <id>https://blog.xsojson.com/post/wo-de-di-yi-ge-wen-zhang/</id>
+        <link href="https://blog.xsojson.com/post/wo-de-di-yi-ge-wen-zhang/">
+        </link>
+        <updated>2023-08-30T13:08:49.000Z</updated>
+        <content type="html"><![CDATA[<p>2023年8月30日21:08:56<br>
+开始</p>
+]]></content>
+    </entry>
+</feed>
